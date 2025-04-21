@@ -32,6 +32,7 @@ class RelatedObjectsCollector:
         self.instance = instance
         self.meta = self.instance._meta
         self.related_objects = self.meta.related_objects
+        self.is_empty = True
         # Collect data after setting the related_objects attribute
         self.__collect_objects()
         # Change the public data attribute value affter collecting the data 
@@ -52,17 +53,20 @@ class RelatedObjectsCollector:
                     if hasattr(self.instance,query_name):
                         query = list(getattr(self.instance,query_name).all())
                         if not related_model in objects:
-                            objects[related_model]  = {
+                            if query:
+                                objects[related_model]  = {
                                 on_delete:query
                             }
                         else:
-                            objects[related_model][on_delete].extend(query)
+                            if query:
+                                objects[related_model][on_delete].extend(query)
                             
             
         
         self.__data = objects
         self.__paginator( [PaginatorObject(model,related_items) for model,related_items in objects.items()  ]  )
-    
+        
+        self.is_empty = len(self.__data.values()) == 0
     
     def __paginator(self,values):
         ''' Generate new paginator  '''
